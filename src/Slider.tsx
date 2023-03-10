@@ -13,19 +13,19 @@ const marks = [
     },
     {
         value: 25,
-        label: '08:00',
+        label: '07:00',
     },
     {
         value: 50,
-        label: '10:00',
+        label: '08:00',
     },
     {
         value: 75,
-        label: '12:00',
+        label: '09:00',
     },
     {
         value: 100,
-        label: '14:00',
+        label: '10:00',
     },
 ];
 
@@ -34,6 +34,11 @@ export const MyStyledSlider = styled(Slider)(() => ({
     color: '#3880ff',
     height: 2,
     padding: '15px 0',
+    cursor: 'default',
+    '& .Mui-Active': {
+        opacity: 0.5,
+        color: 'red',
+    },
     '& .MuiSlider-thumb': {
         height: 12,
         width: 12,
@@ -99,10 +104,17 @@ function fromSliderUnitsToMoment(value: number, fullRange: { startMoment: Moment
     return tempStart.add(toAdd, 'minutes');
 }
 
+function fromSliderRangeToMinutes(diff: number, fullRangeMinutes: number): number {
+    return diff * fullRangeMinutes / 100;
+}
+
 export default function MySlider(props: {
     timeLowerValue: Moment,
     setTimeLowerValue: (timeLowerValue: Moment) => void,
     delta: number,
+    setDelta: (delta: number) => void,
+    date: Moment,
+    setDate: (date: Moment) => void,
     fullRange: { startMoment: Moment, endMoment: Moment }
 }) {
     const [sliderLowerValue, setSliderLowerValue] = useState(0);
@@ -121,12 +133,24 @@ export default function MySlider(props: {
         if (!Array.isArray(newValue)) {
             return;
         }
+        let sliderDiff = newValue[2] - newValue[0];
+        let newDelta = fromSliderRangeToMinutes(sliderDiff, fullRangeMinutes);
         if (activeThumb === 0) {
+            if (newDelta >= fullRangeMinutes / 8) {
+                props.setDelta(newDelta);
+            }
             const clamped = Math.min(newValue[0], 100 - sliderDelta);
             updateSliderLowerValue(clamped);
-        } else {
-            const clamped = Math.max(newValue[1] - sliderDelta, 0);
+        } else if (activeThumb === 1) {
+            const clamped = Math.max(newValue[1] - sliderDelta / 2, 0);
             updateSliderLowerValue(clamped);
+        } else {
+            if (newDelta >= fullRangeMinutes / 8) {
+                props.setDelta(newDelta);
+            } else {
+                const clamped = Math.max(newValue[2] - sliderDelta, 0);
+                updateSliderLowerValue(clamped);
+            }
         }
     };
 
@@ -138,10 +162,9 @@ export default function MySlider(props: {
         <div style={{ textAlign: 'center' }}>
             <Box sx={{ width: 400, margin: 'auto' }}>
                 <MyStyledSlider
-                    value={[sliderLowerValue, sliderLowerValue + sliderDelta]}
+                    value={[sliderLowerValue, sliderLowerValue + sliderDelta / 2, sliderLowerValue + sliderDelta]}
                     onChange={handleChange}
                     valueLabelDisplay="auto"
-                    disableSwap
                     marks={marks}
                     style={{ boxShadow: "none" }}
                     valueLabelFormat={(value) => <div>{fromSliderUnitsToTimestamp(value, props.fullRange)}</div>}

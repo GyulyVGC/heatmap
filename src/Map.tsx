@@ -4,7 +4,6 @@ import "leaflet/dist/leaflet.css";
 import "leaflet.heat";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Moment } from 'moment';
-import Slider from '@mui/material/Slider';
 import { Row, Col } from 'react-bootstrap';
 import { MyStyledSlider } from './Slider';
 

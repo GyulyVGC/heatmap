@@ -2,6 +2,7 @@ import './App.css';
 import { useState } from "react";
 import Map from "./Map";
 import MySlider from './Slider';
+import BasicSelect from './RangeSelector';
 import Form from 'react-bootstrap/Form';
 import { Moment } from 'moment';
 
@@ -21,36 +22,25 @@ function App() {
   const updateDelta = (delta: number) => {
     setDelta(delta);
   }
+  const [date, setDate] = useState(moment("2023-02-23", 'YYYY-MM-DD'));
+  const updateDate = (date: Moment) => {
+    setDate(date);
+  }
   const [fullRange, setFullRange] = useState({
     startMoment: moment("2023-02-23T06:00:00", 'YYYY-MM-DD hh:mm:ss'),
-    endMoment: moment("2023-02-23T14:00:00", 'YYYY-MM-DD hh:mm:ss')
+    endMoment: moment("2023-02-23T10:00:00", 'YYYY-MM-DD hh:mm:ss')
   });
   const updateFullRange = (fullRange: { startMoment: Moment, endMoment: Moment }) => {
     setFullRange(fullRange);
   }
 
-  let deltaRadioButtons = [];
-  for (let d of [10, 30, 60, 120]) {
-    deltaRadioButtons.push(
-      <Form.Check
-        inline
-        defaultChecked={d === delta}
-        label={d}
-        name="group1"
-        type='radio'
-        id='inline-radio-1'
-        onClick={() => setDelta(d)}
-      />
-    );
-  }
-
   let rangeRadioButtons = [];
-  for (let range of [1, 2, 4, 8]) {
+  for (let r of [1, 2, 4, 8]) {
     rangeRadioButtons.push(
       <Form.Check
         inline
-        defaultChecked={range === 8}
-        label={range}
+        defaultChecked={r === 4}
+        label={r}
         name="group2"
         type='radio'
         id='inline-radio-2'
@@ -64,15 +54,8 @@ function App() {
     <Map timeLowerValue={timeLowerValue}
       opacityVal={opacityVal} setOpacityVal={updateOpacityVal}
       delta={delta} setDelta={updateDelta} />
-    <MySlider timeLowerValue={timeLowerValue} setTimeLowerValue={updateTimeLowerValue} fullRange={fullRange} delta={delta} />
-    <div style={{ textAlign: 'center', paddingTop: 10 }}>
-      Delta (minutes)
-    </div>
-    <div style={{ textAlign: 'center' }}>
-      <div className="form-check-inline" style={{ margin: 'auto', paddingTop: 10 }}>
-        {deltaRadioButtons}
-      </div>
-    </div>
+    <MySlider date={date} setDate={updateDate} timeLowerValue={timeLowerValue} setTimeLowerValue={updateTimeLowerValue} fullRange={fullRange} delta={delta} setDelta={updateDelta} />
+    <BasicSelect/>
     <div style={{ textAlign: 'center', paddingTop: 10 }}>
       Range (hours)
     </div>

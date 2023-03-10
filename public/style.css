@@ -45,6 +45,10 @@ body {
 .MuiSlider-thumb.Mui-focusVisible, .MuiSlider-thumb:hover {
     box-shadow:none !important;
 }
+.MuiSelect-select {
+  color: red;
+  background-color: red;
+}
 .draggable {
   cursor: pointer;
 }
