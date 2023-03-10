@@ -3,31 +3,40 @@ import Slider from '@mui/material/Slider';
 import styled from 'styled-components';
 import { Moment } from 'moment';
 import { useState } from "react";
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import { Row, Col } from 'react-bootstrap';
 
 const moment = require('moment');
 
-const marks = [
-    {
-        value: 0,
-        label: '06:00',
-    },
-    {
-        value: 25,
-        label: '07:00',
-    },
-    {
-        value: 50,
-        label: '08:00',
-    },
-    {
-        value: 75,
-        label: '09:00',
-    },
-    {
-        value: 100,
-        label: '10:00',
-    },
-];
+const getMarks = (fullRange: { startMoment: Moment, endMoment: Moment }) => {
+    let startMoment = new moment(fullRange.startMoment);
+    const fullRangeMinutes: number = moment.duration(fullRange.endMoment.diff(fullRange.startMoment)).asMinutes();
+    const deltaBetweenMarks: number = fullRangeMinutes / 4;
+    return [
+        {
+            value: 0,
+            label: startMoment.format("HH:mm"),
+        },
+        {
+            value: 25,
+            label: startMoment.add(deltaBetweenMarks, "minutes").format("HH:mm"),
+        },
+        {
+            value: 50,
+            label: startMoment.add(deltaBetweenMarks, "minutes").format("HH:mm"),
+        },
+        {
+            value: 75,
+            label: startMoment.add(deltaBetweenMarks, "minutes").format("HH:mm"),
+        },
+        {
+            value: 100,
+            label: startMoment.add(deltaBetweenMarks, "minutes").format("HH:mm"),
+        },
+    ];
+}
 
 
 export const MyStyledSlider = styled(Slider)(() => ({
@@ -108,6 +117,24 @@ function fromSliderRangeToMinutes(diff: number, fullRangeMinutes: number): numbe
     return diff * fullRangeMinutes / 100;
 }
 
+const leftArrowClick = (fullRange: { startMoment: Moment, endMoment: Moment },
+    setFullRange: ((fullRange: { startMoment: Moment, endMoment: Moment }) => void)) => {
+    const fullRangeMinutes: number = moment.duration(fullRange.endMoment.diff(fullRange.startMoment)).asMinutes();
+    let newUpperBound: Moment = new moment(fullRange.startMoment);
+    let newLowerBound: Moment = new moment(fullRange.startMoment);
+    newLowerBound.subtract(fullRangeMinutes, 'minutes');
+    setFullRange({ startMoment: newLowerBound, endMoment: newUpperBound });
+}
+
+const rightArrowClick = (fullRange: { startMoment: Moment, endMoment: Moment },
+    setFullRange: ((fullRange: { startMoment: Moment, endMoment: Moment }) => void)) => {
+    const fullRangeMinutes: number = moment.duration(fullRange.endMoment.diff(fullRange.startMoment)).asMinutes();
+    let newLowerBound: Moment = new moment(fullRange.endMoment);
+    let newUpperBound: Moment = new moment(fullRange.endMoment);
+    newUpperBound.add(fullRangeMinutes, 'minutes');
+    setFullRange({ startMoment: newLowerBound, endMoment: newUpperBound });
+}
+
 export default function MySlider(props: {
     timeLowerValue: Moment,
     setTimeLowerValue: (timeLowerValue: Moment) => void,
@@ -115,7 +142,8 @@ export default function MySlider(props: {
     setDelta: (delta: number) => void,
     date: Moment,
     setDate: (date: Moment) => void,
-    fullRange: { startMoment: Moment, endMoment: Moment }
+    fullRange: { startMoment: Moment, endMoment: Moment },
+    setFullRange: ((fullRange: { startMoment: Moment, endMoment: Moment }) => void)
 }) {
     const [sliderLowerValue, setSliderLowerValue] = useState(0);
     const updateSliderLowerValue = (sliderLowerValue: number) => {
@@ -160,16 +188,26 @@ export default function MySlider(props: {
 
     return (
         <div style={{ textAlign: 'center' }}>
-            <Box sx={{ width: 400, margin: 'auto' }}>
-                <MyStyledSlider
-                    value={[sliderLowerValue, sliderLowerValue + sliderDelta / 2, sliderLowerValue + sliderDelta]}
-                    onChange={handleChange}
-                    valueLabelDisplay="auto"
-                    marks={marks}
-                    style={{ boxShadow: "none" }}
-                    valueLabelFormat={(value) => <div>{fromSliderUnitsToTimestamp(value, props.fullRange)}</div>}
-                />
-            </Box>
+            {/* <CalendarMonthIcon sx={{fontSize: 45}}/> */}
+            {props.timeLowerValue.format("DD MMMM")}
+            <Row style={{ width: "60%", margin: 'auto' }}>
+                <Col className='col-1'>
+                    <KeyboardArrowLeftIcon sx={{ fontSize: 40 }} onClick={() => leftArrowClick(props.fullRange, props.setFullRange)} style={{ cursor: "pointer" }} />
+                </Col>
+                <Col className='col-10'>
+                    <MyStyledSlider
+                        value={[sliderLowerValue, sliderLowerValue + sliderDelta / 2, sliderLowerValue + sliderDelta]}
+                        onChange={handleChange}
+                        valueLabelDisplay="auto"
+                        marks={getMarks(props.fullRange)}
+                        style={{ boxShadow: "none" }}
+                        valueLabelFormat={(value) => <div>{fromSliderUnitsToTimestamp(value, props.fullRange)}</div>}
+                    />
+                </Col>
+                <Col className='col-1'>
+                    <KeyboardArrowRightIcon sx={{ fontSize: 40 }} onClick={() => rightArrowClick(props.fullRange, props.setFullRange)} style={{ cursor: "pointer" }} />
+                </Col>
+            </Row>
         </div>
     );
 }

@@ -26,7 +26,8 @@ function Map(props: {
     opacityVal: number,
     setOpacityVal: (opacityVal: number) => void,
     delta: number,
-    setDelta: (delta: number) => void
+    setDelta: (delta: number) => void,
+    fullRange: { startMoment: Moment, endMoment: Moment },
 }) {
     const [isInitialized, setIsInitialized] = useState(false);
     const updateIsInitialized = (isInitialized: boolean) => {
@@ -44,22 +45,21 @@ function Map(props: {
     return (
         <>
             <Row style={{ width: "100%" }}>
-                <p id="map" style={{ height: "50vh", width: "50%", margin: "30px", marginRight: '10px', alignSelf: 'center' }}></p>
-                <Col className='col-sm-1' style={{ alignSelf: "center", height: "80%", marginTop:'30px', width: "100" }}>
+                <p id="map" style={{ height: "50vh", width: "50%", margin: "30px", marginRight: '0px', alignSelf: 'center' }}></p>
+                <Col style={{ alignSelf: "center", height: "80%", marginTop:'30px', width: "10px" }}>
+                    <p style={{ width: '10px', textAlign: 'center', fontSize: 8, margin: 0}}>
                     <MyStyledSlider
                         sx={{
                             '& input[type="range"]': {
                                 WebkitAppearance: 'slider-vertical',
                             },
-                            height: 200, alignSelf: 'center'
+                            height: 200, 
                         }}
                         orientation="vertical"
                         defaultValue={50}
-                        aria-label="Temperature"
                         valueLabelDisplay="off"
                         onChange={(event: Event, value: number | number[], activeThumb: number) => props.setOpacityVal(value as number)}
                     />
-                    <p style={{ textAlign: 'center', fontSize: 8 }}>
                         Opacity
                     </p>
                 </Col>
@@ -123,31 +123,6 @@ function updateMap(timeLowerValue: Moment, opacityVal: number, delta: number) {
     heatLayer = L.heatLayer(currentPoints, { radius: 8, minOpacity: opacityVal / 100, blur: 4, 
     gradient: {0.3: '#66ffff',1.0: '#003399'} }).addTo(map);
 }
-
-// returns an index of the allPoints array
-// function getLowerBound(sliderVal: number): number {
-//     let lowerBoundIndex = Math.round(allPoints.length * sliderVal / 100);
-//     return lowerBoundIndex < allPoints.length ? lowerBoundIndex : allPoints.length - 1;
-// }
-
-// returns an index of the allPoints array
-// function getUpperBound(sliderVal: number, delta: number): number {
-//     // get lower bound element and parse its timestamp
-//     // start scanning from lower bound until timestamp < lower_bound_timestamp + delta
-//     let lowerBoundIndex: number = getLowerBound(sliderVal);
-//     let lowerBoundTimestamp: string = allPoints[lowerBoundIndex].timestamp;
-//     let lowerBoundMoment: Moment = moment(lowerBoundTimestamp, 'YYYY-MM-DD hh:mm:ss');
-//     let upperBoundMoment: Moment = lowerBoundMoment.add(delta, "minutes");
-//     let upperBoundIndex: number = allPoints.length - 1;
-//     for (let i = lowerBoundIndex; i < allPoints.length; ++i) {
-//         let currentMoment: Moment = moment(allPoints[i].timestamp, 'YYYY-MM-DD hh:mm:ss');
-//         if (currentMoment.isAfter(upperBoundMoment)) {
-//             upperBoundIndex = i - 1;
-//             break;
-//         }
-//     }
-//     return upperBoundIndex;
-// }
 
 function getCentralPoint(points: LatLng[]): LatLng {
     let minLat = 90;

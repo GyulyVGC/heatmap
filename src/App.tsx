@@ -27,11 +27,12 @@ function App() {
     setDate(date);
   }
   const [fullRange, setFullRange] = useState({
-    startMoment: moment("2023-02-23T06:00:00", 'YYYY-MM-DD hh:mm:ss'),
-    endMoment: moment("2023-02-23T10:00:00", 'YYYY-MM-DD hh:mm:ss')
+    startMoment: moment("2023-02-23T06:00:00", 'YYYY-MM-DD HH:mm:ss'),
+    endMoment: moment("2023-02-23T10:00:00", 'YYYY-MM-DD HH:mm:ss')
   });
   const updateFullRange = (fullRange: { startMoment: Moment, endMoment: Moment }) => {
     setFullRange(fullRange);
+    updateTimeLowerValue(fullRange.startMoment);
   }
 
   let rangeRadioButtons = [];
@@ -53,9 +54,12 @@ function App() {
   return (<div className='App'>
     <Map timeLowerValue={timeLowerValue}
       opacityVal={opacityVal} setOpacityVal={updateOpacityVal}
+      fullRange={fullRange}
       delta={delta} setDelta={updateDelta} />
-    <MySlider date={date} setDate={updateDate} timeLowerValue={timeLowerValue} setTimeLowerValue={updateTimeLowerValue} fullRange={fullRange} delta={delta} setDelta={updateDelta} />
-    <BasicSelect/>
+    <MySlider date={date} setDate={updateDate} timeLowerValue={timeLowerValue}
+     setTimeLowerValue={updateTimeLowerValue} fullRange={fullRange} setFullRange={updateFullRange}
+      delta={delta} setDelta={updateDelta} />
+    {/* <BasicSelect/>
     <div style={{ textAlign: 'center', paddingTop: 10 }}>
       Range (hours)
     </div>
@@ -63,7 +67,7 @@ function App() {
       <div className="form-check-inline" style={{ margin: 'auto', paddingTop: 10 }}>
         {rangeRadioButtons}
       </div>
-    </div>
+    </div> */}
 
   </div>);
 }
