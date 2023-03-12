@@ -47,7 +47,7 @@ function Map(props: {
             <Row style={{ width: "100%" }}>
                 <p id="map" style={{ height: "50vh", width: "50%", margin: "30px", marginRight: '0px', alignSelf: 'center' }}></p>
                 <Col style={{ alignSelf: "center", height: "80%", marginTop:'30px', width: "10px" }}>
-                    <p style={{ width: '10px', textAlign: 'center', fontSize: 8, margin: 0}}>
+                    <p style={{ width: '10px', textAlign: 'center', fontSize: 10, margin: 0}}>
                     <MyStyledSlider
                         sx={{
                             '& input[type="range"]': {
@@ -103,7 +103,7 @@ function updateMap(timeLowerValue: Moment, opacityVal: number, delta: number) {
     let timeUpperValue: Moment = new moment(timeLowerValue);
     timeUpperValue.add(delta, 'minutes');
     for (let i = 0; i < allPoints.length; i++) {
-        let pointTime: Moment = moment(allPoints[i].timestamp, 'YYYY-MM-DD hh:mm:ss');
+        let pointTime: Moment = moment(allPoints[i].timestamp, 'YYYY-MM-DD HH:mm:ss');
         if (pointTime.isAfter(timeLowerValue) && timeUpperValue.isAfter(pointTime)) {
             let pointLat: number = allPoints[i].position.lat;
             let pointLong: number = allPoints[i].position.lng;

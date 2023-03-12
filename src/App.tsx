@@ -32,7 +32,6 @@ function App() {
   });
   const updateFullRange = (fullRange: { startMoment: Moment, endMoment: Moment }) => {
     setFullRange(fullRange);
-    updateTimeLowerValue(fullRange.startMoment);
   }
 
   let rangeRadioButtons = [];

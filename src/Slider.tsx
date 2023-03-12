@@ -1,5 +1,8 @@
 import Box from '@mui/material/Box';
 import Slider from '@mui/material/Slider';
+import Tooltip from '@mui/material/Tooltip';
+import Zoom from '@mui/material/Zoom';
+
 import styled from 'styled-components';
 import { Moment } from 'moment';
 import { useState } from "react";
@@ -103,7 +106,7 @@ function fromSliderUnitsToTimestamp(value: number, fullRange: { startMoment: Mom
     const fullRangeMinutes: number = moment.duration(fullRange.endMoment.diff(fullRange.startMoment)).asMinutes();
     const toAdd = value * fullRangeMinutes / 100;
     let tempStart = new moment(fullRange.startMoment);
-    return tempStart.add(toAdd, 'minutes').format("hh:mm");
+    return tempStart.add(toAdd, 'minutes').format("HH:mm");
 }
 
 function fromSliderUnitsToMoment(value: number, fullRange: { startMoment: Moment, endMoment: Moment }): Moment {
@@ -118,19 +121,29 @@ function fromSliderRangeToMinutes(diff: number, fullRangeMinutes: number): numbe
 }
 
 const leftArrowClick = (fullRange: { startMoment: Moment, endMoment: Moment },
-    setFullRange: ((fullRange: { startMoment: Moment, endMoment: Moment }) => void)) => {
+    setFullRange: ((fullRange: { startMoment: Moment, endMoment: Moment }) => void),
+    timeLowerValue: Moment,
+    setTimeLowerValue: (timeLowerValue: Moment) => void) => {
     const fullRangeMinutes: number = moment.duration(fullRange.endMoment.diff(fullRange.startMoment)).asMinutes();
     let newUpperBound: Moment = new moment(fullRange.startMoment);
     let newLowerBound: Moment = new moment(fullRange.startMoment);
+    let newTimeLowerValue: Moment = new moment(timeLowerValue);
+    newTimeLowerValue.subtract(fullRangeMinutes, 'minutes');
+    setTimeLowerValue(newTimeLowerValue);
     newLowerBound.subtract(fullRangeMinutes, 'minutes');
     setFullRange({ startMoment: newLowerBound, endMoment: newUpperBound });
 }
 
 const rightArrowClick = (fullRange: { startMoment: Moment, endMoment: Moment },
-    setFullRange: ((fullRange: { startMoment: Moment, endMoment: Moment }) => void)) => {
+    setFullRange: ((fullRange: { startMoment: Moment, endMoment: Moment }) => void),
+    timeLowerValue: Moment,
+    setTimeLowerValue: (timeLowerValue: Moment) => void) => {
     const fullRangeMinutes: number = moment.duration(fullRange.endMoment.diff(fullRange.startMoment)).asMinutes();
     let newLowerBound: Moment = new moment(fullRange.endMoment);
     let newUpperBound: Moment = new moment(fullRange.endMoment);
+    let newTimeLowerValue: Moment = new moment(timeLowerValue);
+    newTimeLowerValue.add(fullRangeMinutes, 'minutes');
+    setTimeLowerValue(newTimeLowerValue);
     newUpperBound.add(fullRangeMinutes, 'minutes');
     setFullRange({ startMoment: newLowerBound, endMoment: newUpperBound });
 }
@@ -192,7 +205,11 @@ export default function MySlider(props: {
             {props.timeLowerValue.format("DD MMMM")}
             <Row style={{ width: "60%", margin: 'auto' }}>
                 <Col className='col-1'>
-                    <KeyboardArrowLeftIcon sx={{ fontSize: 40 }} onClick={() => leftArrowClick(props.fullRange, props.setFullRange)} style={{ cursor: "pointer" }} />
+                    <Tooltip followCursor TransitionComponent={Zoom} title="previous" placement='top'>
+                        <KeyboardArrowLeftIcon sx={{ fontSize: 40 }}
+                            onClick={() => leftArrowClick(props.fullRange, props.setFullRange, props.timeLowerValue, props.setTimeLowerValue)}
+                            style={{ cursor: "pointer" }} />
+                    </Tooltip>
                 </Col>
                 <Col className='col-10'>
                     <MyStyledSlider
@@ -205,7 +222,9 @@ export default function MySlider(props: {
                     />
                 </Col>
                 <Col className='col-1'>
-                    <KeyboardArrowRightIcon sx={{ fontSize: 40 }} onClick={() => rightArrowClick(props.fullRange, props.setFullRange)} style={{ cursor: "pointer" }} />
+                    <Tooltip followCursor TransitionComponent={Zoom} title="next" placement='top'>
+                        <KeyboardArrowRightIcon sx={{ fontSize: 40 }} onClick={() => rightArrowClick(props.fullRange, props.setFullRange, props.timeLowerValue, props.setTimeLowerValue)} style={{ cursor: "pointer" }} />
+                    </Tooltip>
                 </Col>
             </Row>
         </div>
