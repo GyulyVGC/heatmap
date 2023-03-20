@@ -9,14 +9,19 @@ import { MyStyledSlider } from './Slider';
 
 const moment = require('moment');
 var map: L.Map;
-var allPoints: { position: LatLng, timestamp: string }[] = [];
-var heatLayer: L.Layer;
+var allPoints: { position: LatLng, timestamp: string }[][] = [[], []];
+var heatLayers: L.Layer[] = [];
+var gradients = [
+    { 0.3: '#66ffff', 1.0: '#003399' },
+    { 0.3: '#ff66ff', 1.0: '#993300' },
+    { 0.3: '#ffff66', 1.0: '#339900' }
+]
 
 const config = {
     minZoom: 1,
     maxZoom: 23,
 };
-const initZoom = 9;
+const initZoom = 8;
 
 const initLat = 45.3;
 const initLong = 8.0;
@@ -46,20 +51,20 @@ function Map(props: {
         <>
             <Row style={{ width: "100%" }}>
                 <p id="map" style={{ height: "50vh", width: "50%", margin: "30px", marginRight: '0px', alignSelf: 'center' }}></p>
-                <Col style={{ alignSelf: "center", height: "80%", marginTop:'30px', width: "10px" }}>
-                    <p style={{ width: '10px', textAlign: 'center', fontSize: 10, margin: 0}}>
-                    <MyStyledSlider
-                        sx={{
-                            '& input[type="range"]': {
-                                WebkitAppearance: 'slider-vertical',
-                            },
-                            height: 200, 
-                        }}
-                        orientation="vertical"
-                        defaultValue={50}
-                        valueLabelDisplay="off"
-                        onChange={(event: Event, value: number | number[], activeThumb: number) => props.setOpacityVal(value as number)}
-                    />
+                <Col style={{ alignSelf: "center", height: "80%", marginTop: '30px', width: "10px" }}>
+                    <p style={{ width: '10px', textAlign: 'center', fontSize: 10, margin: 0 }}>
+                        <MyStyledSlider
+                            sx={{
+                                '& input[type="range"]': {
+                                    WebkitAppearance: 'slider-vertical',
+                                },
+                                height: 200,
+                            }}
+                            orientation="vertical"
+                            defaultValue={50}
+                            valueLabelDisplay="off"
+                            onChange={(event: Event, value: number | number[], activeThumb: number) => props.setOpacityVal(value as number)}
+                        />
                         Opacity
                     </p>
                 </Col>
@@ -77,10 +82,11 @@ function Map(props: {
 
 function initializeMap(setIsInitialized: (isInitialized: boolean) => void) {
     map = L.map("map", config).setView([initLat, initLong], initZoom);
+    // let arrayToWrite: { position: LatLng, timestamp: string }[] = [];
 
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
     fetch('./andata.json')
-        .then((response) => response.json())
+        .then((response: { json: () => any; }) => response.json())
         .then((json) => {
             for (let i = 0; i < json.length; i++) {
                 let pointLat: number = json[i].lat;
@@ -88,40 +94,68 @@ function initializeMap(setIsInitialized: (isInitialized: boolean) => void) {
                 let timestamp: string = json[i].time;
                 let displayTimestamp = timestamp.substring(0, 19);
                 let latLng_object = new L.LatLng(pointLat, pointLong);
-                allPoints.push({
-                    position: latLng_object,
-                    timestamp: displayTimestamp
+                if (json[i].target === "new_target") {
+                    allPoints[1].push({
+                        position: latLng_object,
+                        timestamp: displayTimestamp
+                    })
+                } else {
+                    allPoints[0].push({
+                        position: latLng_object,
+                        timestamp: displayTimestamp
+                    })
                 }
-                )
             }
             setIsInitialized(true);
         });
 }
 
 function updateMap(timeLowerValue: Moment, opacityVal: number, delta: number) {
-    let currentPoints: LatLng[] = [];
+    let currentPoints: LatLng[][] = [[], []];
     let timeUpperValue: Moment = new moment(timeLowerValue);
     timeUpperValue.add(delta, 'minutes');
-    for (let i = 0; i < allPoints.length; i++) {
-        let pointTime: Moment = moment(allPoints[i].timestamp, 'YYYY-MM-DD HH:mm:ss');
+    let firstPerson = allPoints[0];
+    let secondPerson = allPoints[1];
+    for (let i = 0; i < firstPerson.length; i++) {
+        let pointTime: Moment = moment(firstPerson[i].timestamp, 'YYYY-MM-DD HH:mm:ss');
         if (pointTime.isAfter(timeLowerValue) && timeUpperValue.isAfter(pointTime)) {
-            let pointLat: number = allPoints[i].position.lat;
-            let pointLong: number = allPoints[i].position.lng;
+            let pointLat: number = firstPerson[i].position.lat;
+            let pointLong: number = firstPerson[i].position.lng;
             let latLng_object = new L.LatLng(pointLat, pointLong);
-            currentPoints.push(
+            currentPoints[0].push(
                 latLng_object
             )
         }
     }
-    if (currentPoints.length > 0) {
-        let center = getCentralPoint(currentPoints);
+    for (let i = 0; i < secondPerson.length; i++) {
+        let pointTime: Moment = moment(secondPerson[i].timestamp, 'YYYY-MM-DD HH:mm:ss');
+        if (pointTime.isAfter(timeLowerValue) && timeUpperValue.isAfter(pointTime)) {
+            let pointLat: number = secondPerson[i].position.lat;
+            let pointLong: number = secondPerson[i].position.lng;
+            let latLng_object = new L.LatLng(pointLat, pointLong);
+            currentPoints[1].push(
+                latLng_object
+            )
+        }
+    }
+    if (currentPoints.flat(1).length > 0) {
+        let center = getCentralPoint(currentPoints.flat(1));
         map.panTo(center);
     }
-    if (heatLayer !== undefined && heatLayer !== null) {
-        map.removeLayer(heatLayer);
+    if (heatLayers[0] !== undefined && heatLayers[0] !== null) {
+        map.removeLayer(heatLayers[0]);
     }
-    heatLayer = L.heatLayer(currentPoints, { radius: 8, minOpacity: opacityVal / 100, blur: 4, 
-    gradient: {0.3: '#66ffff',1.0: '#003399'} }).addTo(map);
+    heatLayers[0] = L.heatLayer(currentPoints[0], {
+        radius: 8, minOpacity: opacityVal / 100, blur: 4,
+        gradient: gradients[0]
+    }).addTo(map);
+    if (heatLayers[1] !== undefined && heatLayers[1] !== null) {
+        map.removeLayer(heatLayers[1]);
+    }
+    heatLayers[1] = L.heatLayer(currentPoints[1], {
+        radius: 8, minOpacity: opacityVal / 100, blur: 4,
+        gradient: gradients[1]
+    }).addTo(map);
 }
 
 function getCentralPoint(points: LatLng[]): LatLng {
