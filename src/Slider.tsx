@@ -1,4 +1,3 @@
-import Box from '@mui/material/Box';
 import Slider from '@mui/material/Slider';
 import Tooltip from '@mui/material/Tooltip';
 import Zoom from '@mui/material/Zoom';
@@ -55,6 +54,7 @@ export const MyStyledSlider = styled(Slider)(() => ({
         height: 12,
         width: 12,
         backgroundColor: 'blue 100',
+        transition: 'none'
     },
     '& .MuiSlider-valueLabel': {
         fontSize: 10,
@@ -72,6 +72,7 @@ export const MyStyledSlider = styled(Slider)(() => ({
     },
     '& .MuiSlider-track': {
         border: '2px #000',
+        transition: 'none'
     },
     '& .MuiSlider-rail': {
         opacity: 1.0,
@@ -215,9 +216,10 @@ export default function MySlider(props: {
                     <MyStyledSlider
                         value={[sliderLowerValue, sliderLowerValue + sliderDelta / 2, sliderLowerValue + sliderDelta]}
                         onChange={handleChange}
+                        step={3}
                         valueLabelDisplay="auto"
                         marks={getMarks(props.fullRange)}
-                        style={{ boxShadow: "none" }}
+                        style={{ boxShadow: "none", transition: 'none' }}
                         valueLabelFormat={(value) => <div>{fromSliderUnitsToTimestamp(value, props.fullRange)}</div>}
                     />
                 </Col>

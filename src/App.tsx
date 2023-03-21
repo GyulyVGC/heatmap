@@ -33,6 +33,10 @@ function App() {
   const updateFullRange = (fullRange: { startMoment: Moment, endMoment: Moment }) => {
     setFullRange(fullRange);
   }
+  const [showTargets, setShowTargets] = useState([true, false]);
+  const updateShowTargets = (showTargets: boolean[]) => {
+    setShowTargets(showTargets);
+  }
 
   let rangeRadioButtons = [];
   for (let r of [1, 2, 4, 8]) {
@@ -53,6 +57,8 @@ function App() {
   return (<div className='App'>
     <Map timeLowerValue={timeLowerValue}
       opacityVal={opacityVal} setOpacityVal={updateOpacityVal}
+      showTargets={showTargets}
+      setShowTargets={updateShowTargets}
       fullRange={fullRange}
       delta={delta} setDelta={updateDelta} />
     <MySlider date={date} setDate={updateDate} timeLowerValue={timeLowerValue}

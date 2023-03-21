@@ -1,18 +1,21 @@
 import L, { LatLng } from 'leaflet';
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import "leaflet/dist/leaflet.css";
 import "leaflet.heat";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Moment } from 'moment';
 import { Row, Col } from 'react-bootstrap';
 import { MyStyledSlider } from './Slider';
+import Checkbox from '@mui/material/Checkbox';
+import FormGroup from '@mui/material/FormGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
 
 const moment = require('moment');
 var map: L.Map;
 var allPoints: { position: LatLng, timestamp: string }[][] = [[], []];
 var heatLayers: L.Layer[] = [];
 var gradients = [
-    { 0.3: '#66ffff', 1.0: '#003399' },
+    { 0.3: '#66ffff', 1.0: '#3399ff' },
     { 0.3: '#ff66ff', 1.0: '#993300' },
     { 0.3: '#ffff66', 1.0: '#339900' }
 ]
@@ -33,6 +36,8 @@ function Map(props: {
     delta: number,
     setDelta: (delta: number) => void,
     fullRange: { startMoment: Moment, endMoment: Moment },
+    showTargets: boolean[],
+    setShowTargets: (showTargets: boolean[]) => void,
 }) {
     const [isInitialized, setIsInitialized] = useState(false);
     const updateIsInitialized = (isInitialized: boolean) => {
@@ -42,9 +47,9 @@ function Map(props: {
         if (!isInitialized) {
             initializeMap(updateIsInitialized);
         } else {
-            updateMap(props.timeLowerValue, props.opacityVal, props.delta);
+            updateMap(props.timeLowerValue, props.opacityVal, props.delta, props.showTargets);
         }
-    }, [props.timeLowerValue, props.opacityVal, props.delta, isInitialized]);
+    }, [props.timeLowerValue, props.opacityVal, props.delta, isInitialized, props.showTargets]);
 
 
     return (
@@ -60,14 +65,50 @@ function Map(props: {
                                 },
                                 height: 200,
                             }}
+                            style={{ boxShadow: "none", transition: 'none' }}
                             orientation="vertical"
                             defaultValue={50}
                             valueLabelDisplay="off"
+                            step={5}
                             onChange={(event: Event, value: number | number[], activeThumb: number) => props.setOpacityVal(value as number)}
                         />
                         Opacity
                     </p>
                 </Col>
+                <Row style={{ width: "50%" }}>
+                    <Col>
+                        <FormGroup>
+                            <FormControlLabel style={{ alignSelf: 'center' }} control={
+                                <Checkbox
+                                    sx={{
+                                        color: gradients[0][1],
+                                        '&.Mui-checked': {
+                                            color: gradients[0][1],
+                                        },
+                                    }}
+                                    checked={props.showTargets[0]}
+                                    onChange={(event: ChangeEvent<HTMLInputElement>, checked: boolean) => props.setShowTargets([checked, props.showTargets[1]])}
+                                    inputProps={{ 'aria-label': 'controlled' }}
+                                />} label="Target 1" />
+                        </FormGroup>
+                    </Col>
+                    <Col>
+                        <FormGroup>
+                            <FormControlLabel style={{ alignSelf: 'center' }} control={
+                                <Checkbox
+                                    sx={{
+                                        color: gradients[1][1],
+                                        '&.Mui-checked': {
+                                            color: gradients[1][1],
+                                        },
+                                    }}
+                                    checked={props.showTargets[1]}
+                                    onChange={(event: ChangeEvent<HTMLInputElement>, checked: boolean) => props.setShowTargets([props.showTargets[0], checked])}
+                                    inputProps={{ 'aria-label': 'controlled' }}
+                                />} label="Target 2" />
+                        </FormGroup>
+                    </Col>
+                </Row>
             </Row>
             {/* {
                 isInitialized ?
@@ -110,7 +151,7 @@ function initializeMap(setIsInitialized: (isInitialized: boolean) => void) {
         });
 }
 
-function updateMap(timeLowerValue: Moment, opacityVal: number, delta: number) {
+function updateMap(timeLowerValue: Moment, opacityVal: number, delta: number, showTargets: boolean[]) {
     let currentPoints: LatLng[][] = [[], []];
     let timeUpperValue: Moment = new moment(timeLowerValue);
     timeUpperValue.add(delta, 'minutes');
@@ -142,20 +183,26 @@ function updateMap(timeLowerValue: Moment, opacityVal: number, delta: number) {
         let center = getCentralPoint(currentPoints.flat(1));
         map.panTo(center);
     }
+
     if (heatLayers[0] !== undefined && heatLayers[0] !== null) {
         map.removeLayer(heatLayers[0]);
     }
-    heatLayers[0] = L.heatLayer(currentPoints[0], {
-        radius: 8, minOpacity: opacityVal / 100, blur: 4,
-        gradient: gradients[0]
-    }).addTo(map);
+    if (showTargets[0]) {
+        heatLayers[0] = L.heatLayer(currentPoints[0], {
+            radius: 8, minOpacity: opacityVal / 100, blur: 4,
+            gradient: gradients[0]
+        }).addTo(map);
+    }
+
     if (heatLayers[1] !== undefined && heatLayers[1] !== null) {
         map.removeLayer(heatLayers[1]);
     }
-    heatLayers[1] = L.heatLayer(currentPoints[1], {
-        radius: 8, minOpacity: opacityVal / 100, blur: 4,
-        gradient: gradients[1]
-    }).addTo(map);
+    if (showTargets[1]) {
+        heatLayers[1] = L.heatLayer(currentPoints[1], {
+            radius: 8, minOpacity: opacityVal / 100, blur: 4,
+            gradient: gradients[1]
+        }).addTo(map);
+    }
 }
 
 function getCentralPoint(points: LatLng[]): LatLng {
