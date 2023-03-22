@@ -33,8 +33,7 @@ function LeafletMap(props: {
     timeLowerValue: Moment,
     opacityVal: number,
     setOpacityVal: (opacityVal: number) => void,
-    delta: number,
-    setDelta: (delta: number) => void,
+    timeUpperValue: Moment,
     fullRange: { startMoment: Moment, endMoment: Moment },
     showTargets: boolean[],
     setShowTargets: (showTargets: boolean[]) => void,
@@ -47,16 +46,16 @@ function LeafletMap(props: {
         if (!isInitialized) {
             initializeMap(updateIsInitialized);
         } else {
-            updateMap(props.timeLowerValue, props.opacityVal, props.delta, props.showTargets);
+            updateMap(props.timeLowerValue, props.timeUpperValue, props.opacityVal, props.showTargets);
         }
-    }, [props.timeLowerValue, props.opacityVal, props.delta, isInitialized, props.showTargets]);
+    }, [props.timeLowerValue, props.timeUpperValue, props.opacityVal, isInitialized, props.showTargets]);
 
 
     return (
         <>
             <Row style={{ width: "100%" }}>
-                <p id="map" style={{ height: "50vh", width: "50%", margin: "30px", marginRight: '0px', alignSelf: 'center' }}></p>
-                <Col style={{ alignSelf: "center", height: "80%", marginTop: '30px', width: "10px" }}>
+                <p id="map" style={{ height: "370px", width: "90%", margin: "10px", marginRight: '0px', alignSelf: 'center' }}></p>
+                <Col style={{ alignSelf: "center", height: "80%", marginTop: '30px', width: "10%" }}>
                     <p style={{ width: '10px', textAlign: 'center', fontSize: 10, margin: 0 }}>
                         <MyStyledSlider
                             sx={{
@@ -74,7 +73,7 @@ function LeafletMap(props: {
                         Opacity
                     </p>
                 </Col>
-                <Row style={{ width: "50%" }}>
+                <Row style={{ width: "100%" }}>
                     <Col>
                         <FormGroup>
                             <FormControlLabel style={{ alignSelf: 'center' }} control={
@@ -117,7 +116,7 @@ function initializeMap(setIsInitialized: (isInitialized: boolean) => void) {
     map = L.map("map", config).setView([initLat, initLong], initZoom);
 
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
-    fetch('./andata.json')
+    fetch('./andata_locations.json')
         .then((response: { json: () => any; }) => response.json())
         .then((json) => {
             for (let i = 0; i < json.length; i++) {
@@ -137,10 +136,8 @@ function initializeMap(setIsInitialized: (isInitialized: boolean) => void) {
         });
 }
 
-function updateMap(timeLowerValue: Moment, opacityVal: number, delta: number, showTargets: boolean[]) {
+function updateMap(timeLowerValue: Moment, timeUpperValue: Moment, opacityVal: number, showTargets: boolean[]) {
     let currentPoints: LatLng[][] = [[], []];
-    let timeUpperValue: Moment = new moment(timeLowerValue);
-    timeUpperValue.add(delta, 'minutes');
 
     let i = 0;
     for (let target of Array.from(allPoints.keys())) {

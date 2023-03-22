@@ -1,10 +1,12 @@
 import './App.css';
 import { useState } from "react";
-import LeafletMap from "./Map";
+import LeafletMap from "./LeafletMap";
+import NetworkData from "./NetworkData";
 import MySlider from './Slider';
 import BasicSelect from './RangeSelector';
 import Form from 'react-bootstrap/Form';
 import { Moment } from 'moment';
+import { Row, Col } from 'react-bootstrap';
 
 const moment = require('moment');
 
@@ -14,14 +16,15 @@ function App() {
   const updateTimeLowerValue = (timeLowerValue: Moment) => {
     setTimeLowerValue(timeLowerValue);
   }
+  const [timeUpperValue, setTimeUpperValue] = useState(moment("2023-02-23T07:00:00", 'YYYY-MM-DD hh:mm:ss'));
+  const updateTimeUpperValue = (timeUpperValue: Moment) => {
+    setTimeUpperValue(timeUpperValue);
+  }
   const [opacityVal, setOpacityVal] = useState(50);
   const updateOpacityVal = (sliderVal: number) => {
     setOpacityVal(sliderVal);
   }
-  const [delta, setDelta] = useState(60);
-  const updateDelta = (delta: number) => {
-    setDelta(delta);
-  }
+
   const [date, setDate] = useState(moment("2023-02-23", 'YYYY-MM-DD'));
   const updateDate = (date: Moment) => {
     setDate(date);
@@ -55,24 +58,22 @@ function App() {
 
 
   return (<div className='App'>
-    <LeafletMap timeLowerValue={timeLowerValue}
-      opacityVal={opacityVal} setOpacityVal={updateOpacityVal}
-      showTargets={showTargets}
-      setShowTargets={updateShowTargets}
-      fullRange={fullRange}
-      delta={delta} setDelta={updateDelta} />
-    <MySlider date={date} setDate={updateDate} timeLowerValue={timeLowerValue}
-     setTimeLowerValue={updateTimeLowerValue} fullRange={fullRange} setFullRange={updateFullRange}
-      delta={delta} setDelta={updateDelta} />
-    {/* <BasicSelect/>
-    <div style={{ textAlign: 'center', paddingTop: 10 }}>
-      Range (hours)
-    </div>
-    <div style={{ textAlign: 'center' }}>
-      <div className="form-check-inline" style={{ margin: 'auto', paddingTop: 10 }}>
-        {rangeRadioButtons}
-      </div>
-    </div> */}
+    <Row style={{ width: "100%", margin: 'auto' }}>
+      <Col className='col-6' style={{paddingRight: 0}}>
+        <LeafletMap timeLowerValue={timeLowerValue}
+          opacityVal={opacityVal} setOpacityVal={updateOpacityVal}
+          showTargets={showTargets}
+          setShowTargets={updateShowTargets}
+          fullRange={fullRange}
+          timeUpperValue={timeUpperValue} />
+      </Col>
+      <Col className='col-6' style={{paddingLeft: 0}}>
+        <NetworkData />
+      </Col>
+    </Row>
+    <MySlider date={date} setDate={updateDate} timeLowerValue={timeLowerValue} setTimeLowerValue={updateTimeLowerValue}
+      timeUpperValue={timeUpperValue} setTimeUpperValue={updateTimeUpperValue}
+      fullRange={fullRange} setFullRange={updateFullRange} />
 
   </div>);
 }

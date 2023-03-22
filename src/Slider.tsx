@@ -7,7 +7,6 @@ import { Moment } from 'moment';
 import { useState } from "react";
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import { Row, Col } from 'react-bootstrap';
 
 const moment = require('moment');
@@ -152,8 +151,8 @@ const rightArrowClick = (fullRange: { startMoment: Moment, endMoment: Moment },
 export default function MySlider(props: {
     timeLowerValue: Moment,
     setTimeLowerValue: (timeLowerValue: Moment) => void,
-    delta: number,
-    setDelta: (delta: number) => void,
+    timeUpperValue: Moment,
+    setTimeUpperValue: (timeLowerValue: Moment) => void,
     date: Moment,
     setDate: (date: Moment) => void,
     fullRange: { startMoment: Moment, endMoment: Moment },
@@ -165,8 +164,15 @@ export default function MySlider(props: {
         props.setTimeLowerValue(time);
         setSliderLowerValue(sliderLowerValue);
     }
+    const [sliderUpperValue, setSliderUpperValue] = useState(25);
+    const updateSliderUpperValue = (sliderUpperValue: number) => {
+        let time = fromSliderUnitsToMoment(sliderUpperValue, props.fullRange);
+        props.setTimeUpperValue(time);
+        setSliderUpperValue(sliderUpperValue);
+    }
     const fullRangeMinutes: number = moment.duration(props.fullRange.endMoment.diff(props.fullRange.startMoment)).asMinutes();
-    let sliderDelta: number = fromTimeToSliderUnits(props.delta, fullRangeMinutes);
+    const selectedRangeMinutes: number = moment.duration(props.timeUpperValue.diff(props.timeLowerValue)).asMinutes();
+    let sliderDelta: number = fromTimeToSliderUnits(selectedRangeMinutes, fullRangeMinutes);
     const handleChange = (
         event: Event,
         newValue: number | number[],
@@ -175,30 +181,30 @@ export default function MySlider(props: {
         if (!Array.isArray(newValue)) {
             return;
         }
-        let sliderDiff = newValue[2] - newValue[0];
-        let newDelta = fromSliderRangeToMinutes(sliderDiff, fullRangeMinutes);
+        const edgeCase: boolean = ((sliderLowerValue === 0 && newValue[1] < sliderDelta / 2)
+        || (sliderUpperValue === 100 && newValue[1] > 100 - sliderDelta / 2));
+        if(edgeCase) {
+            return;
+        }
         if (activeThumb === 0) {
-            if (newDelta >= fullRangeMinutes / 8) {
-                props.setDelta(newDelta);
-            }
-            const clamped = Math.min(newValue[0], 100 - sliderDelta);
-            updateSliderLowerValue(clamped);
-        } else if (activeThumb === 1) {
-            const clamped = Math.max(newValue[1] - sliderDelta / 2, 0);
-            updateSliderLowerValue(clamped);
-        } else {
-            if (newDelta >= fullRangeMinutes / 8) {
-                props.setDelta(newDelta);
+            if(newValue[2] - newValue[0] < 15) {
+                updateSliderLowerValue(Math.max(newValue[0], 0));
+                updateSliderUpperValue(Math.min(newValue[0] + sliderDelta, 100));
             } else {
-                const clamped = Math.max(newValue[2] - sliderDelta, 0);
-                updateSliderLowerValue(clamped);
+                updateSliderLowerValue(newValue[0]);
+            }
+        } else if (activeThumb === 1) {
+                updateSliderLowerValue(Math.max(newValue[1] - sliderDelta / 2, 0));
+                updateSliderUpperValue(Math.min(newValue[1] + sliderDelta / 2, 100));
+        } else if (activeThumb === 2) {
+            if(newValue[2] - newValue[0] < 15) {
+                updateSliderLowerValue(Math.max(newValue[2] - sliderDelta, 0));
+                updateSliderUpperValue(Math.min(newValue[2], 100));
+            } else {
+                updateSliderUpperValue(newValue[2]);
             }
         }
     };
-
-    if (sliderLowerValue + sliderDelta > 100) {
-        updateSliderLowerValue(100 - sliderDelta);
-    }
 
     return (
         <div style={{ textAlign: 'center' }}>
@@ -213,7 +219,7 @@ export default function MySlider(props: {
                 </Col>
                 <Col className='col-10'>
                     <MyStyledSlider
-                        value={[sliderLowerValue, sliderLowerValue + sliderDelta / 2, sliderLowerValue + sliderDelta]}
+                        value={[sliderLowerValue, (sliderLowerValue + sliderUpperValue) / 2, sliderUpperValue]}
                         onChange={handleChange}
                         valueLabelDisplay="auto"
                         marks={getMarks(props.fullRange)}
