@@ -12,7 +12,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 
 const moment = require('moment');
 var map: L.Map;
-var allPoints: { position: LatLng, timestamp: string }[][] = [[], []];
+var allPoints = new Map<string, { position: L.LatLng, timestamp: string }[]>();
 var heatLayers: L.Layer[] = [];
 var gradients = [
     { 0.3: '#66ffff', 1.0: '#3399ff' },
@@ -29,7 +29,7 @@ const initZoom = 8;
 const initLat = 45.3;
 const initLong = 8.0;
 
-function Map(props: {
+function LeafletMap(props: {
     timeLowerValue: Moment,
     opacityVal: number,
     setOpacityVal: (opacityVal: number) => void,
@@ -69,7 +69,6 @@ function Map(props: {
                             orientation="vertical"
                             defaultValue={50}
                             valueLabelDisplay="off"
-                            step={5}
                             onChange={(event: Event, value: number | number[], activeThumb: number) => props.setOpacityVal(value as number)}
                         />
                         Opacity
@@ -89,7 +88,7 @@ function Map(props: {
                                     checked={props.showTargets[0]}
                                     onChange={(event: ChangeEvent<HTMLInputElement>, checked: boolean) => props.setShowTargets([checked, props.showTargets[1]])}
                                     inputProps={{ 'aria-label': 'controlled' }}
-                                />} label="Target 1" />
+                                />} label='original_target' />
                         </FormGroup>
                     </Col>
                     <Col>
@@ -105,25 +104,17 @@ function Map(props: {
                                     checked={props.showTargets[1]}
                                     onChange={(event: ChangeEvent<HTMLInputElement>, checked: boolean) => props.setShowTargets([props.showTargets[0], checked])}
                                     inputProps={{ 'aria-label': 'controlled' }}
-                                />} label="Target 2" />
+                                />} label={Array.from(allPoints.keys())[1]} />
                         </FormGroup>
                     </Col>
                 </Row>
             </Row>
-            {/* {
-                isInitialized ?
-                    <div style={{ textAlign: 'center', paddingTop: 10 }}>
-                        Time: from {allPoints[getLowerBound(props.timeLowerValue)].timestamp}
-                        &nbsp;to {allPoints[getUpperBound(props.timeLowerValue, props.delta)].timestamp}
-                    </div> : null
-            } */}
         </>
     );
 }
 
 function initializeMap(setIsInitialized: (isInitialized: boolean) => void) {
     map = L.map("map", config).setView([initLat, initLong], initZoom);
-    // let arrayToWrite: { position: LatLng, timestamp: string }[] = [];
 
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
     fetch('./andata.json')
@@ -135,17 +126,12 @@ function initializeMap(setIsInitialized: (isInitialized: boolean) => void) {
                 let timestamp: string = json[i].time;
                 let displayTimestamp = timestamp.substring(0, 19);
                 let latLng_object = new L.LatLng(pointLat, pointLong);
-                if (json[i].target === "new_target") {
-                    allPoints[1].push({
-                        position: latLng_object,
-                        timestamp: displayTimestamp
-                    })
-                } else {
-                    allPoints[0].push({
-                        position: latLng_object,
-                        timestamp: displayTimestamp
-                    })
-                }
+                let prevPoints = allPoints.get(json[i].target);
+                let newElement = {
+                    position: latLng_object,
+                    timestamp: displayTimestamp
+                };
+                allPoints.set(json[i].target, (prevPoints || []).concat(newElement));
             }
             setIsInitialized(true);
         });
@@ -155,53 +141,38 @@ function updateMap(timeLowerValue: Moment, opacityVal: number, delta: number, sh
     let currentPoints: LatLng[][] = [[], []];
     let timeUpperValue: Moment = new moment(timeLowerValue);
     timeUpperValue.add(delta, 'minutes');
-    let firstPerson = allPoints[0];
-    let secondPerson = allPoints[1];
-    for (let i = 0; i < firstPerson.length; i++) {
-        let pointTime: Moment = moment(firstPerson[i].timestamp, 'YYYY-MM-DD HH:mm:ss');
-        if (pointTime.isAfter(timeLowerValue) && timeUpperValue.isAfter(pointTime)) {
-            let pointLat: number = firstPerson[i].position.lat;
-            let pointLong: number = firstPerson[i].position.lng;
-            let latLng_object = new L.LatLng(pointLat, pointLong);
-            currentPoints[0].push(
-                latLng_object
-            )
+
+    let i = 0;
+    for (let target of Array.from(allPoints.keys())) {
+        for (let point of allPoints.get(target) || []){
+            let pointTime: Moment = moment(point.timestamp, 'YYYY-MM-DD HH:mm:ss');
+            if (pointTime.isAfter(timeLowerValue) && timeUpperValue.isAfter(pointTime)) {
+                let pointLat: number = point.position.lat;
+                let pointLong: number = point.position.lng;
+                let latLng_object = new L.LatLng(pointLat, pointLong);
+                currentPoints[i].push(
+                    latLng_object
+                )
+            }
         }
+        i++;
     }
-    for (let i = 0; i < secondPerson.length; i++) {
-        let pointTime: Moment = moment(secondPerson[i].timestamp, 'YYYY-MM-DD HH:mm:ss');
-        if (pointTime.isAfter(timeLowerValue) && timeUpperValue.isAfter(pointTime)) {
-            let pointLat: number = secondPerson[i].position.lat;
-            let pointLong: number = secondPerson[i].position.lng;
-            let latLng_object = new L.LatLng(pointLat, pointLong);
-            currentPoints[1].push(
-                latLng_object
-            )
-        }
-    }
-    if (currentPoints.flat(1).length > 0) {
+
+    if (currentPoints.flat().length > 0) {
         let center = getCentralPoint(currentPoints.flat(1));
         map.panTo(center);
     }
 
-    if (heatLayers[0] !== undefined && heatLayers[0] !== null) {
-        map.removeLayer(heatLayers[0]);
-    }
-    if (showTargets[0]) {
-        heatLayers[0] = L.heatLayer(currentPoints[0], {
-            radius: 8, minOpacity: opacityVal / 100, blur: 4,
-            gradient: gradients[0]
-        }).addTo(map);
-    }
-
-    if (heatLayers[1] !== undefined && heatLayers[1] !== null) {
-        map.removeLayer(heatLayers[1]);
-    }
-    if (showTargets[1]) {
-        heatLayers[1] = L.heatLayer(currentPoints[1], {
-            radius: 8, minOpacity: opacityVal / 100, blur: 4,
-            gradient: gradients[1]
-        }).addTo(map);
+    for (let i=0; i < currentPoints.length; i++) {
+        if (heatLayers[i] !== undefined && heatLayers[i] !== null) {
+            map.removeLayer(heatLayers[i]);
+        }
+        if (showTargets[i]) {
+            heatLayers[i] = L.heatLayer(currentPoints[i], {
+                radius: 8, minOpacity: opacityVal / 100, blur: 4,
+                gradient: gradients[i]
+            }).addTo(map);
+        }
     }
 }
 
@@ -229,4 +200,4 @@ function getCentralPoint(points: LatLng[]): LatLng {
     return new LatLng(centralLat, centralLng);
 }
 
-export default Map;
+export default LeafletMap;

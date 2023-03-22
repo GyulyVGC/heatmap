@@ -1,6 +1,6 @@
 import './App.css';
 import { useState } from "react";
-import Map from "./Map";
+import LeafletMap from "./Map";
 import MySlider from './Slider';
 import BasicSelect from './RangeSelector';
 import Form from 'react-bootstrap/Form';
@@ -55,7 +55,7 @@ function App() {
 
 
   return (<div className='App'>
-    <Map timeLowerValue={timeLowerValue}
+    <LeafletMap timeLowerValue={timeLowerValue}
       opacityVal={opacityVal} setOpacityVal={updateOpacityVal}
       showTargets={showTargets}
       setShowTargets={updateShowTargets}

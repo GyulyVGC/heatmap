@@ -202,7 +202,6 @@ export default function MySlider(props: {
 
     return (
         <div style={{ textAlign: 'center' }}>
-            {/* <CalendarMonthIcon sx={{fontSize: 45}}/> */}
             {props.timeLowerValue.format("DD MMMM")}
             <Row style={{ width: "60%", margin: 'auto' }}>
                 <Col className='col-1'>
@@ -216,7 +215,6 @@ export default function MySlider(props: {
                     <MyStyledSlider
                         value={[sliderLowerValue, sliderLowerValue + sliderDelta / 2, sliderLowerValue + sliderDelta]}
                         onChange={handleChange}
-                        step={3}
                         valueLabelDisplay="auto"
                         marks={getMarks(props.fullRange)}
                         style={{ boxShadow: "none", transition: 'none' }}
